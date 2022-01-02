@@ -1,4 +1,4 @@
-import { input } from "./utils";
+import { input, range } from "./utils";
 
 (async () => {
   const maybeX = await input("Enter number X: ");
@@ -6,6 +6,7 @@ import { input } from "./utils";
   const x = parseInt(maybeX, 10);
   const y = parseInt(maybeY, 10);
 
-  console.log(`x**y = ${x ** y}`);
-  console.log(`log2(x) = ${Math.log2(x)}`);
+  for (const i of range(x, y)) {
+    console.log(i);
+  }
 })();
