@@ -1,0 +1,25 @@
+{
+  "name": "6.0001",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "ts-node"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jarvis1010/6.0001.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Jarvis1010/6.0001/issues"
+  },
+  "homepage": "https://github.com/Jarvis1010/6.0001#readme",
+  "dependencies": {
+    "@types/node": "^17.0.6",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.4"
+  }
+}
