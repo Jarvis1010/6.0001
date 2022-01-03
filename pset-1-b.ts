@@ -33,7 +33,9 @@ function monthlyInterest(currentSavings: number) {
 
     const raise =
       months > 6 && months % 6 === 1 ? annualSalary * semiannualRaise : 0;
+
     const salary = annualSalary + raise;
+
     const monthlySalary = salary / 12;
     const salarySaved = monthlySalary * portionSaved;
 
