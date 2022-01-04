@@ -1,3 +1,3 @@
 import { hangman } from "./hangman";
 
-hangman();
+hangman("hello");

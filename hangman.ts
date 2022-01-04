@@ -55,17 +55,36 @@ Available letters: ${getAvailableLetters(lettersGuessed)}`
   );
 }
 
-async function getLetter(lettersGuessed: string[]) {
-  let letter = "";
+function isAlpha(letter: string) {
+  return /^[a-z]$/.test(letter);
+}
 
+async function getLetter(
+  lettersGuessed: string[],
+  warningsLeft: number,
+  guessesLeft: number
+) {
+  let letter = "";
+  let guesses = 0;
   do {
     letter = (await input("Please guess a letter: "))[0].toLowerCase();
-    if (lettersGuessed.includes(letter)) {
-      console.info(`Oops! You've already guessed that letter`);
+    if (lettersGuessed.includes(letter) || !isAlpha(letter)) {
+      warningsLeft = Math.max(warningsLeft - 1, 0);
+      console.info(`Oops! You can only guess an available letter.`);
+      console.info(
+        `You have ${warningsLeft} warning${warningsLeft === 1 ? "" : "s"} left.`
+      );
+      guesses = warningsLeft < 1 ? guesses + 1 : guesses;
+      console.info(
+        warningsLeft === 0
+          ? `You now have ${guessesLeft - guesses} guesses remaining.`
+          : ""
+      );
+      if (guessesLeft == guesses) break;
     }
-  } while (lettersGuessed.includes(letter));
+  } while (!isAlpha(letter) || lettersGuessed.includes(letter));
 
-  return letter;
+  return { letter, guesses, warningsRemaining: warningsLeft };
 }
 
 function calculateGuessesLeft(
@@ -82,16 +101,26 @@ function calculateGuessesLeft(
 export async function hangman(mySecretWord?: string) {
   const secretWord = mySecretWord ?? chooseWord(loadWords());
   let guessesLeft = 6;
+  let warningsLeft = 3;
   let lettersGuessed: string[] = [];
+
+  console.info("Welcome to the game Hangman!");
 
   while (!isWordGuessed(secretWord, lettersGuessed) && guessesLeft > 0) {
     printGameStatus(secretWord, guessesLeft, lettersGuessed);
-    const letter = await getLetter(lettersGuessed);
+    const { letter, guesses, warningsRemaining } = await getLetter(
+      lettersGuessed,
+      warningsLeft,
+      guessesLeft
+    );
+    warningsLeft = warningsRemaining;
+    guessesLeft -= guesses;
+    if (guessesLeft < 0) continue;
     lettersGuessed = [...lettersGuessed, letter];
     guessesLeft = calculateGuessesLeft(secretWord, letter, guessesLeft);
   }
   const displayText = isWordGuessed(secretWord, lettersGuessed)
-    ? "You win!"
+    ? `You win! Your score is ${guessesLeft * new Set(secretWord).size}`
     : `You lose! The word was "${secretWord}"`;
   console.info(displayText);
 }
