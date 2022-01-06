@@ -16,5 +16,13 @@ export function input(prompt: string): Promise<string> {
 export function range(start: number, end: number): number[] {
   if (start > end) throw new Error("Start must be less than end");
 
-  return Array.from(Array(end - start + 1).keys()).map((i) => start + i);
+  return Array.from(Array(end - start).keys()).map((i) => start + i);
+}
+
+export function randomChoice<T extends string | Array<unknown>>(
+  choices: T
+): T[number] {
+  const index = Math.floor(Math.random() * 1000) % choices.length;
+
+  return choices[index];
 }
