@@ -5,7 +5,7 @@
 
 import path from "path";
 import fs from "fs";
-import { range, randomChoice } from "./utils";
+import { range, randomChoice, input } from "./utils";
 
 const VOWELS = "aeiou" as const;
 const CONSONANTS = "bcdfghjklmnpqrstvwxyz" as const;
@@ -95,7 +95,7 @@ export function displayHand(hand: Record<string, number>): void {
       .join(" ")
   );
 
-  console.log(handStrings.join(" "));
+  console.info(handStrings.join(" "));
 }
 
 // Make sure you understand how this function works and what it does!
@@ -104,7 +104,7 @@ export function displayHand(hand: Record<string, number>): void {
 
 export function dealHand(n: number): Record<string, number> {
   const numVowels = Math.floor(n / 3);
-  console.log(range(0, numVowels - 1));
+
   const vowels = range(0, numVowels - 1)
     .map(() => randomChoice(VOWELS))
     .concat("*");
@@ -205,148 +205,90 @@ export function isValidWord(
 //
 // Problem #5: Playing a hand
 //
-// def calculate_handlen(hand):
-//     """
-//     Returns the length (number of letters) in the current hand.
 
-//     hand: dictionary (string-> int)
-//     returns: integer
-//     """
+function calculateHandlelen(hand: Record<string, number>): number {
+  return Object.values(hand).reduce<number>((acc, length) => {
+    return acc + length;
+  }, 0);
+}
 
-//     pass  # TO DO... Remove this line when you implement this function
+async function playHand(hand: Record<string, number>, wordList: string[]) {
+  let totalScore = 0;
+  let word: string;
+  do {
+    console.info("Current Hand: ");
+    displayHand(hand);
+    word = await input(
+      "Enter word, or a '!!' to indicate that you are finished: "
+    );
+    if (word === "!!") {
+      console.info("Total score: ", totalScore);
+      break;
+    }
+    const isValid = isValidWord(word, hand, wordList);
+    if (isValid) {
+      const score = getWordScore(word, calculateHandlelen(hand));
+      totalScore += score;
+      console.info(`"${word}" earned ${score} points. Total: ${totalScore}`);
+    }
 
-// def play_hand(hand, word_list):
+    if (!isValid) {
+      console.info("That is not a valid word. Please choose another word.");
+    }
 
-//     """
-//     Allows the user to play the given hand, as follows:
+    hand = updateHand(hand, word);
+  } while (calculateHandlelen(hand) > 0);
 
-//     * The hand is displayed.
-
-//     * The user may input a word.
-
-//     * When any word is entered (valid or invalid), it uses up letters
-//       from the hand.
-
-//     * An invalid word is rejected, and a message is displayed asking
-//       the user to choose another word.
-
-//     * After every valid word: the score for that word is displayed,
-//       the remaining letters in the hand are displayed, and the user
-//       is asked to input another word.
-
-//     * The sum of the word scores is displayed when the hand finishes.
-
-//     * The hand finishes when there are no more unused letters.
-//       The user can also finish playing the hand by inputing two
-//       exclamation points (the string '!!') instead of a word.
-
-//       hand: dictionary (string -> int)
-//       word_list: list of lowercase strings
-//       returns: the total score for the hand
-
-//     """
-
-//     # BEGIN PSEUDOCODE <-- Remove this comment when you implement this function
-//     # Keep track of the total score
-
-//     # As long as there are still letters left in the hand:
-
-//         # Display the hand
-
-//         # Ask user for input
-
-//         # If the input is two exclamation points:
-
-//             # End the game (break out of the loop)
-
-//         # Otherwise (the input is not two exclamation points):
-
-//             # If the word is valid:
-
-//                 # Tell the user how many points the word earned,
-//                 # and the updated total score
-
-//             # Otherwise (the word is not valid):
-//                 # Reject invalid word (print a message)
-
-//             # update the user's hand by removing the letters of their inputted word
-
-//     # Game is over (user entered '!!' or ran out of letters),
-//     # so tell user the total score
-
-//     # Return the total score as result of function
+  console.info(`Total score for this hand: ${totalScore}`);
+  return totalScore;
+}
 
 //
 // Problem #6: Playing a game
 //
 
-//
-// procedure you will use to substitute a letter in a hand
-//
+function substituteHand(
+  hand: Record<string, number>,
+  letter: string
+): Record<string, number> {
+  const newLetters = ALPHABET.split("")
+    .filter((char) => char !== letter || (hand[char] ?? 0) === 0)
+    .join("");
 
-// def substitute_hand(hand, letter):
-//     """
-//     Allow the user to replace all copies of one letter in the hand (chosen by user)
-//     with a new letter chosen from the VOWELS and CONSONANTS at random. The new letter
-//     should be different from user's choice, and should not be any of the letters
-//     already in the hand.
+  const newLetter = randomChoice(newLetters);
 
-//     If user provide a letter not in the hand, the hand should be the same.
+  const { [letter]: letterValue = 0, ...rest } = hand;
+  return { ...rest, [newLetter]: letterValue };
+}
 
-//     Has no side effects: does not mutate hand.
+async function playGame(wordList: string[]) {
+  const rawhandCount = await input("Enter total number of hands: ");
+  const maybeHandCount = parseInt(rawhandCount, 10);
+  const handCount = Number.isNaN(maybeHandCount) ? 1 : maybeHandCount;
 
-//     For example:
-//         substitute_hand({'h':1, 'e':1, 'l':2, 'o':1}, 'l')
-//     might return:
-//         {'h':1, 'e':1, 'o':1, 'x':2} -> if the new letter is 'x'
-//     The new letter should not be 'h', 'e', 'l', or 'o' since those letters were
-//     already in the hand.
+  let totalScore = 0;
 
-//     hand: dictionary (string -> int)
-//     letter: string
-//     returns: dictionary (string -> int)
-//     """
+  for (let i = 0; i < handCount; i++) {
+    let hand = dealHand(HAND_SIZE);
+    console.info("Current Hand: ");
+    displayHand(hand);
 
-//     pass  # TO DO... Remove this line when you implement this function
+    const rowShouldSubstitute = await input(
+      "Would you like to substitute a letter (Y/N)? "
+    );
 
-// def play_game(word_list):
-//     """
-//     Allow the user to play a series of hands
+    if (rowShouldSubstitute[0].toLowerCase() === "y") {
+      const letter = await input("Which letter would you like to replace: ");
+      hand = substituteHand(hand, letter[0]);
+    }
 
-//     * Asks the user to input a total number of hands
+    totalScore += await playHand(hand, wordList);
 
-//     * Accumulates the score for each hand into a total score for the
-//       entire series
+    hand = dealHand(HAND_SIZE);
+  }
 
-//     * For each hand, before playing, ask the user if they want to substitute
-//       one letter for another. If the user inputs 'yes', prompt them for their
-//       desired letter. This can only be done once during the game. Once the
-//       substitue option is used, the user should not be asked if they want to
-//       substitute letters in the future.
+  console.info("Total score over all hands: ", totalScore);
+}
 
-//     * For each hand, ask the user if they would like to replay the hand.
-//       If the user inputs 'yes', they will replay the hand and keep
-//       the better of the two scores for that hand.  This can only be done once
-//       during the game. Once the replay option is used, the user should not
-//       be asked if they want to replay future hands. Replaying the hand does
-//       not count as one of the total number of hands the user initially
-//       wanted to play.
-
-//             * Note: if you replay a hand, you do not get the option to substitute
-//                     a letter - you must play whatever hand you just had.
-
-//     * Returns the total score for the series of hands
-
-//     word_list: list of lowercase strings
-//     """
-
-//     print("play_game not implemented.") # TO DO... Remove this line when you implement this function
-
-//
-// Build data structures used for entire session and play game
-// Do not remove the "if __name__ == '__main__':" line - this code is executed
-// when the program is run directly, instead of through an import statement
-//
-// if __name__ == '__main__':
-//     word_list = load_words()
-//     play_game(word_list)
+const word_list = loadWords();
+playGame(word_list);
