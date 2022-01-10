@@ -6,6 +6,7 @@ import {
   PlaintextMessage,
   CiphertextMessage,
 } from "./ps4b";
+import { SubMessage, EncryptedSubMessage } from "./ps4c";
 
 const WORDLIST = loadWords("./words.txt");
 
@@ -120,6 +121,89 @@ Object {
     test("decrypts message", () => {
       const message = new CiphertextMessage("jgnnq");
       expect(message.decryptMessage()).toEqual([24, "hello"]);
+    });
+  });
+
+  describe("SubMessage", () => {
+    test("builds dict", () => {
+      const message = new SubMessage("hello");
+      const dict = message.buildTransposeDict("eioua");
+
+      expect(dict).toMatchInlineSnapshot(`
+Object {
+  "A": "E",
+  "B": "B",
+  "C": "C",
+  "D": "D",
+  "E": "I",
+  "F": "F",
+  "G": "G",
+  "H": "H",
+  "I": "O",
+  "J": "J",
+  "K": "K",
+  "L": "L",
+  "M": "M",
+  "N": "N",
+  "O": "U",
+  "P": "P",
+  "Q": "Q",
+  "R": "R",
+  "S": "S",
+  "T": "T",
+  "U": "A",
+  "V": "V",
+  "W": "W",
+  "X": "X",
+  "Y": "Y",
+  "Z": "Z",
+  "a": "e",
+  "b": "b",
+  "c": "c",
+  "d": "d",
+  "e": "i",
+  "f": "f",
+  "g": "g",
+  "h": "h",
+  "i": "o",
+  "j": "j",
+  "k": "k",
+  "l": "l",
+  "m": "m",
+  "n": "n",
+  "o": "u",
+  "p": "p",
+  "q": "q",
+  "r": "r",
+  "s": "s",
+  "t": "t",
+  "u": "a",
+  "v": "v",
+  "w": "w",
+  "x": "x",
+  "y": "y",
+  "z": "z",
+}
+`);
+    });
+
+    test("encrypts message", () => {
+      const message = new SubMessage("hello");
+      const dict = message.buildTransposeDict("eioua");
+
+      expect(message.applyTranspose(dict)).toEqual("hillu");
+    });
+  });
+
+  describe("EncryptedSubMessage", () => {
+    test("returns best decrypted message", () => {
+      const message = new EncryptedSubMessage("hillu");
+      expect(message.decryptMessage()).toBe("hello");
+    });
+
+    test("returns original if no best available", () => {
+      const message = new EncryptedSubMessage("asidjf;alsdkjf");
+      expect(message.decryptMessage()).toBe("asidjf;alsdkjf");
     });
   });
 });

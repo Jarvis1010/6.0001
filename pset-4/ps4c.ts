@@ -1,7 +1,6 @@
 // Problem Set 4C
 import path from "path";
 import fs from "fs";
-import { range } from "../utils";
 import { getPermutations } from "./ps4a";
 
 // ### HELPER CODE ###
@@ -89,90 +88,69 @@ const CONSONANTS_LOWER = "bcdfghjklmnpqrstvwxyz";
 const CONSONANTS_UPPER = "BCDFGHJKLMNPQRSTVWXYZ";
 
 export class SubMessage {
-  //     def __init__(self, text):
-  //         '''
-  //         Initializes a SubMessage object
-  //         text (string): the message's text
-  //         A SubMessage object has two attributes:
-  //             self.message_text (string, determined by input text)
-  //             self.valid_words (list, determined using helper function load_words)
-  //         '''
-  //         pass #delete this line and replace with your code here
-  //     def get_message_text(self):
-  //         '''
-  //         Used to safely access self.message_text outside of the class
-  //         Returns: self.message_text
-  //         '''
-  //         pass #delete this line and replace with your code here
-  //     def get_valid_words(self):
-  //         '''
-  //         Used to safely access a copy of self.valid_words outside of the class.
-  //         This helps you avoid accidentally mutating class attributes.
-  //         Returns: a COPY of self.valid_words
-  //         '''
-  //         pass #delete this line and replace with your code here
-  //     def build_transpose_dict(self, vowels_permutation):
-  //         '''
-  //         vowels_permutation (string): a string containing a permutation of vowels (a, e, i, o, u)
-  //         Creates a dictionary that can be used to apply a cipher to a letter.
-  //         The dictionary maps every uppercase and lowercase letter to an
-  //         uppercase and lowercase letter, respectively. Vowels are shuffled
-  //         according to vowels_permutation. The first letter in vowels_permutation
-  //         corresponds to a, the second to e, and so on in the order a, e, i, o, u.
-  //         The consonants remain the same. The dictionary should have 52
-  //         keys of all the uppercase letters and all the lowercase letters.
-  //         Example: When input "eaiuo":
-  //         Mapping is a->e, e->a, i->i, o->u, u->o
-  //         and "Hello World!" maps to "Hallu Wurld!"
-  //         Returns: a dictionary mapping a letter (string) to
-  //                  another letter (string).
-  //         '''
-  //         pass #delete this line and replace with your code here
-  //     def apply_transpose(self, transpose_dict):
-  //         '''
-  //         transpose_dict (dict): a transpose dictionary
-  //         Returns: an encrypted version of the message text, based
-  //         on the dictionary
-  //         '''
-  //         pass #delete this line and replace with your code here
+  #messageText: string;
+  #validWords: string[];
+  constructor(text: string) {
+    this.#messageText = text;
+    this.#validWords = loadWords(WORDLIST_FILENAME);
+  }
+
+  getMessageText(): string {
+    return this.#messageText;
+  }
+
+  getValidWords(): string[] {
+    return [...this.#validWords];
+  }
+
+  buildTransposeDict(vowelsPermutation: string): Record<string, string> {
+    const vowelPermUpper = vowelsPermutation.toUpperCase();
+    const vowelPermLower = vowelsPermutation.toLowerCase();
+
+    const vowelEntries = VOWELS_LOWER.split("")
+      .map((vowel, index) => [vowel, vowelPermLower[index]])
+      .concat(
+        VOWELS_UPPER.split("").map((vowel, index) => [
+          vowel,
+          vowelPermUpper[index],
+        ])
+      );
+
+    const consonantsEntries = (CONSONANTS_LOWER + CONSONANTS_UPPER)
+      .split("")
+      .map((char) => [char, char]);
+
+    return Object.fromEntries(vowelEntries.concat(consonantsEntries));
+  }
+
+  applyTranspose(transposeDict: Record<string, string>): string {
+    return this.#messageText
+      .split("")
+      .map((char) => transposeDict[char] ?? char)
+      .join("");
+  }
 }
 
 export class EncryptedSubMessage extends SubMessage {
-  //     def __init__(self, text):
-  //         '''
-  //         Initializes an EncryptedSubMessage object
-  //         text (string): the encrypted message text
-  //         An EncryptedSubMessage object inherits from SubMessage and has two attributes:
-  //             self.message_text (string, determined by input text)
-  //             self.valid_words (list, determined using helper function load_words)
-  //         '''
-  //         pass #delete this line and replace with your code here
-  //     def decrypt_message(self):
-  //         '''
-  //         Attempt to decrypt the encrypted message
-  //         Idea is to go through each permutation of the vowels and test it
-  //         on the encrypted message. For each permutation, check how many
-  //         words in the decrypted text are valid English words, and return
-  //         the decrypted message with the most English words.
-  //         If no good permutations are found (i.e. no permutations result in
-  //         at least 1 valid word), return the original string. If there are
-  //         multiple permutations that yield the maximum number of words, return any
-  //         one of them.
-  //         Returns: the best decrypted message
-  //         Hint: use your function from Part 4A
-  //         '''
-  //         pass #delete this line and replace with your code here
+  constructor(text: string) {
+    super(text);
+  }
+  decryptMessage(): string {
+    const permutations = getPermutations(VOWELS_LOWER);
+    const validWords = this.getValidWords();
+    const decryptedMessages: Array<[string, number]> = permutations
+      .map((permutation) =>
+        this.applyTranspose(this.buildTransposeDict(permutation))
+      )
+      .map((message) => [
+        message,
+        message.split(" ").filter((word) => isWord(validWords, word)).length,
+      ]);
+
+    const bestDecryptedMessage = decryptedMessages
+      .concat([this.getMessageText(), 1])
+      .sort((a, b) => b[1] - a[1]);
+
+    return bestDecryptedMessage[0][0];
+  }
 }
-// if __name__ == '__main__':
-
-//     # Example test case
-//     message = SubMessage("Hello World!")
-//     permutation = "eaiuo"
-//     enc_dict = message.build_transpose_dict(permutation)
-//     print("Original message:", message.get_message_text(), "Permutation:", permutation)
-//     print("Expected encryption:", "Hallu Wurld!")
-//     print("Actual encryption:", message.apply_transpose(enc_dict))
-//     enc_message = EncryptedSubMessage(message.apply_transpose(enc_dict))
-//     print("Decrypted message:", enc_message.decrypt_message())
-
-//     #TODO: WRITE YOUR TEST CASES HERE
